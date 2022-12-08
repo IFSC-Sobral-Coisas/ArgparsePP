@@ -23,7 +23,7 @@ public:
     std::string default_value() const;
 private:
     std::string _name;
-    std::optional<std::string> _val;
+    std::string _val;
 };
 
 std::vector<Arg> make_args(const std::string_view  cmdline);

@@ -5,12 +5,30 @@
 #include "ArgTokenizer.h"
 #include <regex>
 #include <stdexcept>
-#include <numeric>
+#include <utility>
+
+std::optional<std::pair<std::string, std::string>> extract_option(const std::string & tok, const std::regex & expr, int pos) {
+    std::smatch sm;
+
+    if (!std::regex_match(tok, sm, expr)) {
+        auto name = sm[pos].str();
+        auto val = sm[pos+2].str();
+        return std::make_optional(std::make_pair(name, val));
+    }
+
+    return std::nullopt;
+}
 
 Arg::Arg(const std::string & tok) {
     static std::regex expr1("-([a-zA-Z])(=[^\\b]{0,})?");
     static std::regex expr2("--([a-zA-Z]{2,})(=[^\\b]{0,})?");
     std::smatch sm;
+
+    if (auto op = extract_option(tok, expr1, 1)) {
+
+    } else if (auto op = extract_option(tok, expr2, 4)) {
+
+    }
 
     if (!std::regex_match(tok, sm, expr1)) {
         _name = sm[1];
