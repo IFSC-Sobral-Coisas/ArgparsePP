@@ -3,4 +3,4 @@ project(argparse_demo)
 
 set(CMAKE_CXX_STANDARD 17)
 include_directories(include)
-add_executable(demo main.cpp  Argparse.cpp Argparse.h)
+add_executable(demo main.cpp  Argparse.cpp Argparse.h ArgTokenizer.cpp ArgTokenizer.h)
