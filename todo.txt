@@ -6,3 +6,57 @@ Sintaxe para definir opções:
 * multilong: --xx={}
 * singleflag: -x
 * longflag: --x
+
+Mas isso fecha a possibilidade (ou facilidade) de adicionar uma explicação para cada opção e, com isso, poder gerar uma ajuda automática. Então o melhor pode ser voltar ao modelo inicial ... definir explicitamente as opções ! 
+OBS: seria legal poder defini-las junto com o tipo de dados esperado !
+
+**Ex:**
+
+```c++
+template <typename T> add_option(string name, T defval, string help)
+```
+
+_OU:_
+
+```c++
+add_option(string name, int defval, string help)
+add_option(string name, float defval, string help)
+add_option(string name, string defval, string help)
+```
+
+OU:
+
+```c++
+using OptionTypes = std::variant<int,float,std::string,bool>;
+
+// se name.size() == 1: short option
+// se name.size() > 1: long option
+// se defval for bool: opção é uma flag
+void add_option(string name, OptionTypes defval, string help)
+```
+
+
+**Variant:**
+
+```c++
+// Example program
+#include <variant>
+#include <iostream>
+
+void show (std::variant<int,float> & v) {
+  if (auto ptr = std::get_if<int>(&v)) {
+    std::cout << "var=" << *ptr << std::endl;
+  } else if (auto ptr = std::get_if<float>(&v)) {
+    std::cout << "var=" << *ptr << std::endl;
+  }      
+}
+
+int main() {
+  std::variant<int,float> x = 10;
+  std::variant<int,float> y = 3.14f;
+
+  show(x);
+  show(y);
+  
+}
+```
