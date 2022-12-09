@@ -1,0 +1,8 @@
+Sintaxe para definir opções:
+
+* single: -a=[val]
+* multi: -a={}
+* long: --xx=[val]
+* multilong: --xx={}
+* singleflag: -x
+* longflag: --x
