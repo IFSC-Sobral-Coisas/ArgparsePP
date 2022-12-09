@@ -12,12 +12,39 @@
  */
 
 #include "Argparse.h"
+#include <algorithm>
 
 Argparse::Argparse() {
 }
 
 Argparse::Argparse(const Argparse& orig) {
     opts = orig.opts;
+}
+
+Argparse::Argparse(std::string_view args) {
+    auto v_args = make_args(args);
+    setup(v_args);
+}
+
+Argparse::Argparse(const char **argv) {
+    auto v_args = make_args(argv);
+    setup(v_args);
+}
+
+void Argparse::setup(const std::vector<Arg> &args) {
+    if (args.empty()) return;
+
+    std::sort(args.begin(), args.end());
+    auto & last = args[0];
+    for (auto it = args.begin()+1; it != args.end(); it++) {
+
+    }
+}
+
+void Argparse::setup_option(const Arg &arg) {
+    if (arg.is_flag()) {
+        flags.emplace(arg.name(), false);
+    } else if (arg.is_multi())
 }
 
 Argparse::~Argparse() {    
@@ -215,4 +242,6 @@ int Argparse::parse(char* argv[]) {
     }
     return cnt;
 }
+
+
 

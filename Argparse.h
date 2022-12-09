@@ -19,6 +19,8 @@
 #include <vector>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
+#include "ArgTokenizer.h"
 
 using std::optional;
 using std::string;
@@ -28,6 +30,8 @@ using std::map;
 class Argparse {
 public:
     Argparse();
+    Argparse(std::string_view args);
+    Argparse(const char* argv[]);
     Argparse(const Argparse& orig);
     virtual ~Argparse();
 
@@ -88,6 +92,8 @@ private:
     
     string normalize_option(const string& longoption) const;
     void set_option(const string & longoption, const optional<string> & val);
+    void setup(const std::vector<Arg> & args);
+    void setup_option(const Arg & arg);
 };
 
 #endif /* ARGPARSE_H */

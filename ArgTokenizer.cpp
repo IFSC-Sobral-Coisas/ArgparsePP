@@ -20,28 +20,16 @@ std::optional<std::pair<std::string, std::string>> extract_option(const std::str
 }
 
 Arg::Arg(const std::string & tok) {
-    static std::regex expr1("-([a-zA-Z])(=[^\\b]{0,})?");
-    static std::regex expr2("--([a-zA-Z]{2,})(=[^\\b]{0,})?");
+    auto expr = this->get_regex();
+    auto val_pos = this->get_value_pos();
+//    static std::regex expr1("-([a-zA-Z])(=[^\\b]{0,})?");
+//    static std::regex expr2("--([a-zA-Z]{2,})(=[^\\b]{0,})?");
     std::smatch sm;
 
-    if (auto op = extract_option(tok, expr1, 1)) {
-
-    } else if (auto op = extract_option(tok, expr2, 4)) {
-
-    }
-
-    if (!std::regex_match(tok, sm, expr1)) {
-        _name = sm[1];
-        auto val = sm[3].str();
-        if (!val.empty()) {
-            _val = std::make_optional(val);
-        }
-    } else if (!std::regex_match(tok, sm, expr2)) {
-            _name = sm[4];
-            auto val = sm[6].str();
-            if (! val.empty()) {
-                _val = std::make_optional(val);
-            }
+    if (auto op = extract_option(tok, expr, val_pos)) {
+        auto info = op.value();
+        _name  = info.first;
+        this->setup_default_value(info.second);
     } else {
         throw std::invalid_argument("invalid argument option");
     }
@@ -55,16 +43,16 @@ std::string Arg::name() const {
     return _name;
 }
 
-bool Arg::has_value() const {
-    return _val.has_value();
+bool Arg::operator==(const Arg &arg) const {
+    return (_name == arg._name);
 }
 
-std::string Arg::default_value() const {
-    if (_val.has_value()) {
-        return _val.value();
-    } else {
-        return "";
-    }
+bool Arg::operator!=(const Arg &arg) const {
+    return (_name != arg._name);
+}
+
+bool Arg::operator<(const Arg &arg) const {
+    return (_name < arg._name);
 }
 
 std::vector<Arg> make_args(std::string_view args) {
@@ -89,4 +77,16 @@ std::vector<Arg> make_args(const char **argv) {
         args.pop_back();
     }
     return make_args(args);
+}
+
+constexpr std::regex ArgSingle::get_regex() const {
+    return std::__cxx11::regex("-([a-zA-Z])(=[^\\b]{0,})?");
+}
+
+constexpr int ArgSingle::get_value_pos() const {
+    return 1;
+}
+
+void ArgSingle::setup_default_value(const std::string &val) {
+    _val = val;
 }
