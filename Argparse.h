@@ -32,8 +32,6 @@ public:
     Argparse(const Argparse& orig);
     virtual ~Argparse();
 
-    using OptionTypes = std::variant<int,float,std::string,bool>;
-
     void add_flag(std::string_view nome, std::string_view ajuda);
     // aqui definir uma restrição para os tipos possíveis de pasar em "T" (concepts ? static_assert ?)
     template <typename T> void add_option(std::string_view nome, std::string_view ajuda, const T & defval);
@@ -89,9 +87,12 @@ public:
     // é efetuada a partir da segunda posição do vetor (argv[1]).
     int parse(char * argv[]);
 private:
-    map<string,optional<string>> opts;
-    map<string,vector<string>> multiopts;
-    map<string,bool> flags;
+    using OptionTypes = std::variant<std::optional<int>,std::optional<float>,std::optional<std::string>,std::optional<bool>>;
+    using MultiopTypes = std::variant<int,float,std::string>;
+
+    // dict: associa nome da opção a um par (tipo/default, ajuda)
+    map<string,std::pair<OptionTypes, std::string>> opts;
+    map<string,std::pair<std::vector<MultiopTypes>, std::string>> multiopts;
     string extra; // resto da linha de comando ...
     
     string normalize_option(const string& longoption) const;
