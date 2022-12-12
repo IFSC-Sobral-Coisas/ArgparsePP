@@ -19,6 +19,7 @@
 #include <vector>
 #include <optional>
 #include <stdexcept>
+#include <variant>
 
 using std::optional;
 using std::string;
@@ -30,6 +31,13 @@ public:
     Argparse();
     Argparse(const Argparse& orig);
     virtual ~Argparse();
+
+    using OptionTypes = std::variant<int,float,std::string,bool>;
+
+    void add_flag(std::string_view nome, std::string_view ajuda);
+    // aqui definir uma restrição para os tipos possíveis de pasar em "T" (concepts ? static_assert ?)
+    template <typename T> void add_option(std::string_view nome, std::string_view ajuda, const T & defval);
+    template <typename T> void add_multioption(std::string_view nome, std::string_view ajuda);
 
     // Métodos para adicionar uma opção do tipo flag. Tal tipo de opção
     // não requer um valor a ser informado na linha de comando.

@@ -31,6 +31,11 @@ int main(int argc, char** argv) {
      * Assim, o programa pode ser executado com qualquer combinação dessas opções,
      * as quais podem aparecer em qualquer ordem na linha de comando.
      */
+    args.add_flag("h", "Mostra uma ajuda");
+    args.add_option("f", "Nome do arquivo");
+    args.add_option("num", "Linhas iniciais a apresentar", 10);
+    args.add_multioption("out", "Saída onde apresentar o resultado");
+
     args.add_flag('h');
     args.add_option('e');
     args.add_flag('L');
