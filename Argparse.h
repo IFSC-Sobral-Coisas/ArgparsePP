@@ -25,6 +25,8 @@ using std::optional;
 using std::string;
 using std::vector;
 using std::map;
+using std::variant;
+using std::string_view;
 
 class Argparse {
 public:
@@ -32,10 +34,11 @@ public:
     Argparse(const Argparse& orig);
     virtual ~Argparse();
 
-    void add_flag(std::string_view nome, std::string_view ajuda);
+    void add_flag(string_view nome, string_view ajuda);
     // aqui definir uma restrição para os tipos possíveis de pasar em "T" (concepts ? static_assert ?)
-    template <typename T> void add_option(std::string_view nome, std::string_view ajuda, const T & defval);
-    template <typename T> void add_multioption(std::string_view nome, std::string_view ajuda);
+    template <typename T> void add_option(string_view nome, string_view ajuda, const T & defval);
+    template <typename T> void add_option(string_view nome, string_view ajuda);
+    template <typename T> void add_multioption(string_view nome, string_view ajuda);
 
     // Métodos para adicionar uma opção do tipo flag. Tal tipo de opção
     // não requer um valor a ser informado na linha de comando.
@@ -87,17 +90,31 @@ public:
     // é efetuada a partir da segunda posição do vetor (argv[1]).
     int parse(char * argv[]);
 private:
-    using OptionTypes = std::variant<std::optional<int>,std::optional<float>,std::optional<std::string>,std::optional<bool>>;
-    using MultiopTypes = std::variant<int,float,std::string>;
+    using OptionTypes = variant<optional<int>,optional<float>,optional<string>,optional<bool>>;
+    using MultiopTypes = variant<int,float,string>;
 
     // dict: associa nome da opção a um par (tipo/default, ajuda)
-    map<string,std::pair<OptionTypes, std::string>> opts;
-    map<string,std::pair<std::vector<MultiopTypes>, std::string>> multiopts;
+    map<string,std::pair<OptionTypes, string>> opts;
+    map<string,std::pair<vector<MultiopTypes>, string>> multiopts;
     string extra; // resto da linha de comando ...
     
     string normalize_option(const string& longoption) const;
     void set_option(const string & longoption, const optional<string> & val);
 };
 
+template<typename T>
+void Argparse::add_option(string_view nome, string_view ajuda, const T &defval) {
+    opts.emplace(nome, std::make_pair(variant<optional<T>>(std::make_optional<T>(defval)), ajuda));
+}
+
+template<typename T>
+void Argparse::add_option(string_view nome, string_view ajuda) {
+    opts.emplace(nome, std::make_pair(variant<optional<T>>(std::nullopt), ajuda));
+}
+
+template<typename T>
+void Argparse::add_multioption(string_view nome, string_view ajuda) {
+    multiopts.emplace(nome, std::make_pair(vector<MultiopTypes>{}, ajuda));
+}
 #endif /* ARGPARSE_H */
 
