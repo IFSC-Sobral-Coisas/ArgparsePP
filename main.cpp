@@ -34,7 +34,17 @@ int main(int argc, char** argv) {
     args.add_flag("h", "Mostra uma ajuda");
     args.add_option("f", "Nome do arquivo");
     args.add_option("num", "Linhas iniciais a apresentar", 10);
-    args.add_multioption("out", "Saída onde apresentar o resultado");
+    args.add_multioption<string>("out", "Saída onde apresentar o resultado");
+
+    args.parse(argv);
+
+    if (args.has_value("num")) {
+        auto n = args.get_option<int>("num");
+    } else {
+        auto help = args.ajuda();
+        std::cout << help << std::endl;
+    }
+    auto arq = args.get_multioption<string>("out");
 
     args.add_flag('h');
     args.add_option('e');

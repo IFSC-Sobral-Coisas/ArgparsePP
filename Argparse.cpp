@@ -23,148 +23,31 @@ Argparse::Argparse(const Argparse& orig) {
 Argparse::~Argparse() {    
 }
 
-void Argparse::add_multioption(const string& longoption) {    
-    string option = normalize_option(longoption);
-    if (multiopts.count(option) == 0) multiopts[option];
+void Argparse::add_flag(const string& name, string_view ajuda) {
+    opts.emplace(name, std::make_pair(std::make_optional(false), ajuda));
 }
 
-void Argparse::add_multioption(char shortoption) {    
-    string op;
-    op += shortoption;
-    add_multioption(op);
+bool Argparse::get_flag(const string & name) const {
+    auto op = get_option<bool>(name);
+    return op.value_or(false);
 }
 
-void Argparse::add_option(const string& longoption) {    
-    set_option(longoption, std::nullopt);
-}
+bool Argparse::has_value(const string &name) const {
+    return has_some_value<int,string,float,bool>(name);
 
-void Argparse::add_option(char shortoption) {
-    string op;
-    op += shortoption;
-    set_option(op, std::nullopt);
-}
-
-string Argparse::normalize_option(const string& longoption) const {
-    string option = longoption;
-    
-    if (option.size() == 1) option.insert(0, 1, '-');
-    else option.insert(0, 2, '-');
-    
-    return option;
-}
-
-void Argparse::add_option(const string& longoption, const string& defval) {
-    set_option(longoption, make_optional(defval));
-}
-
-void Argparse::add_option(char shortoption, const string& defval) {
-    string op;
-    op += shortoption;
-    set_option(op, make_optional(defval));
-}
-
-void Argparse::set_option(const string &longoption, const optional<string> &val) {
-    string option = normalize_option(longoption);
-
-    if (opts.count(option) > 0) throw std::invalid_argument("opção "+longoption+" já definida"); // erro: opção já cadastrada
-    opts[option] = val;
-}
-
-void Argparse::add_flag(const string& longoption) {
-    add_flag(longoption, false);
-}
-
-void Argparse::add_flag(char shortoption) {
-    add_flag(shortoption, false);
-}
-
-void Argparse::add_flag(const string& longoption, bool defval) {
-    string option = longoption;
-    
-    if (option.size() == 1) option.insert(0, 1, '-');
-    else option.insert(0, 2, '-');
-    
-    if (opts.count(option) > 0) throw std::invalid_argument(option + ": já definida"); // erro: opção já cadastrada
-    flags[option] = defval;
-}
-
-void Argparse::add_flag(char shortoption, bool defval) {
-    string op;
-    op += shortoption;
-    add_flag(op, defval);
-}
-
-bool Argparse::get_flag(char shortoption) const {
-    string op;
-    op += shortoption;
-
-    return get_flag(op);
-}
-
-bool Argparse::get_flag(const string & longoption) const {
-    string option = longoption;
-    
-    if (option.size() == 1) option.insert(0, 1, '-');
-    else option.insert(0, 2, '-');
-
-    try {
-        return flags.at(option);
-    } catch (...) {
-        throw std::invalid_argument(option+": flag inválida"); // flag inválida
-    }
-}
-
-optional<string> Argparse::get_option(char shortoption) const {
-    string op;
-    op += shortoption;
-
-    return get_option(op);
-}
-
-optional<string> Argparse::get_option(const string & longoption) const {
-    string option = normalize_option(longoption);
-    
-    try {
-        auto & val = opts.at(option);
-        return val;
-    } catch (...) {
-        return std::nullopt; // flag inválida
-    }
-}
-
-vector<string> Argparse::get_multioption(char shortoption) const {
-    string op;
-    op += shortoption;
-
-    return get_multioption(op);    
-}
-
-/*#include <iostream>
-
-using std::cout;
-using std::endl;
-*/
-vector<string> Argparse::get_multioption(const string & longoption) const {
-    string op = normalize_option(longoption);
-
-    try {
-        //cout << op << ": " << multiopts.size() << endl;
-        //for (auto s: multiopts.at(op)) cout << s << " ";
-        //cout << endl;
-        return multiopts.at(op);
-    }catch (...) {
-        vector<string> v;
-        
-        return v;
-    }
-}
-
-optional<string> Argparse::operator [](const string& longoption) const {
-    return get_option(longoption);
-}
-
-optional<string> Argparse::operator [](char shortoption) const {
-    return get_option(shortoption);
+//    if (auto op = has_value_of<int>(name)) {
+//        return op.value();
+//    }
+//    if (auto op = has_value_of<string>(name)) {
+//        return op.value();
+//    }
+//    if (auto op = has_value_of<float>(name)) {
+//        return op.value();
+//    }
+//    if (auto op = has_value_of<bool>(name)) {
+//        return op.value();
+//    }
+//    return false;
 }
 
 int Argparse::parse(char* argv[]) {
@@ -215,5 +98,6 @@ int Argparse::parse(char* argv[]) {
     }
     return cnt;
 }
+
 
 

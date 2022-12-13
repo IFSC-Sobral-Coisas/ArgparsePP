@@ -34,52 +34,30 @@ public:
     Argparse(const Argparse& orig);
     virtual ~Argparse();
 
-    void add_flag(string_view nome, string_view ajuda);
-    // aqui definir uma restrição para os tipos possíveis de pasar em "T" (concepts ? static_assert ?)
-    template <typename T> void add_option(string_view nome, string_view ajuda, const T & defval);
-    template <typename T> void add_option(string_view nome, string_view ajuda);
-    template <typename T> void add_multioption(string_view nome, string_view ajuda);
-
     // Métodos para adicionar uma opção do tipo flag. Tal tipo de opção
     // não requer um valor a ser informado na linha de comando.
-    // Ela é do tipo bool: se aparece na linha de comando seu valor é true,    
+    // Ela é do tipo bool: se aparece na linha de comando seu valor é true,
     // e, caso não apareça, seu valor é false.
-    void add_flag(char shortoption);
-    void add_flag(const string & longoption);
-    
-    // Métodos para adicionar uma opção do tipo flag com um valor
-    // predefinido
-    void add_flag(char shortoption, bool defval);
-    void add_flag(const string & longoption, bool defval);
-    
-    
+    void add_flag(const string & nome, string_view ajuda);
+
     // Métodos para adicionar uma opção comum. Tal tipo de opção
     // requer um valor a ser informado na linha de comando.
     // Ela é do tipo string: se aparece na linha de comando, a string que a sucede
     // se torna seu valor. Caso essa opção não apareça, seu valor é uma string vazia.
-    // se "multi" for true, a opçoã pode ser usada múltiplas vezes. 
-    void add_option(char shortoption);
-    void add_option(const string & longoption);
-    void add_multioption(const string & longoption);
-    void add_multioption(char shortoption);
-    
-    // Métodos para adicionar uma opção comum com um valor
-    // predefinido    
-    void add_option(char shortoption, const string & defval);
-    void add_option(const string & longoption, const string & defval);
-    
+    // se "multi" for true, a opçoã pode ser usada múltiplas vezes.
+    template <typename T> void add_option(string_view nome, string_view ajuda, const T & defval);
+    template <typename T> void add_option(string_view nome, string_view ajuda);
+    template <typename T> void add_multioption(string_view nome, string_view ajuda);
+
     // Métodos para obter o valor de uma opção comum
-    optional<string> get_option(char shortoption) const;
-    optional<string> get_option(const string & longoption) const;
-    optional<string> operator[](const string & longoption) const;
-    optional<string> operator[](char shortoption) const;
-    vector<string> get_multioption(char shortoption) const;
-    vector<string> get_multioption(const string & longoption) const;
-    
+    template <typename T> optional<vector<T>> get_multioption(const string& nome) const;
+    template <typename T> optional<T> get_option(const string& nome) const;
+
     // Métodos para obter o valor de uma opção do tipo flag
-    bool get_flag(char shortoption) const ;
-    bool get_flag(const string & longoption) const;
-    
+    bool get_flag(const string & name) const;
+
+    bool has_value(const string& name) const;
+
     // Método para obter os argumentos que não foram processados como
     // opções.
     string get_extra() const { return extra;}
@@ -91,15 +69,16 @@ public:
     int parse(char * argv[]);
 private:
     using OptionTypes = variant<optional<int>,optional<float>,optional<string>,optional<bool>>;
-    using MultiopTypes = variant<int,float,string>;
+    using MultiopTypes = variant<vector<int>,vector<float>,vector<string>>;
 
     // dict: associa nome da opção a um par (tipo/default, ajuda)
     map<string,std::pair<OptionTypes, string>> opts;
-    map<string,std::pair<vector<MultiopTypes>, string>> multiopts;
+    map<string,std::pair<MultiopTypes, string>> multiopts;
     string extra; // resto da linha de comando ...
-    
-    string normalize_option(const string& longoption) const;
-    void set_option(const string & longoption, const optional<string> & val);
+
+    template <typename T> optional<bool> has_value_of(const string & name) const;
+    template <typename T, typename ...Args> bool has_some_value(const string & name) const;
+    bool has_some_value(const string & name) const;
 };
 
 template<typename T>
@@ -114,7 +93,62 @@ void Argparse::add_option(string_view nome, string_view ajuda) {
 
 template<typename T>
 void Argparse::add_multioption(string_view nome, string_view ajuda) {
-    multiopts.emplace(nome, std::make_pair(vector<MultiopTypes>{}, ajuda));
+    multiopts.emplace(nome, std::make_pair(MultiopTypes{vector<T>{}}, ajuda));
+}
+
+template<typename T>
+optional<vector<T>> Argparse::get_multioption(const string& nome) const {
+    try {
+        auto op = multiopts.at(nome);
+        if (auto * p = std::get_if<vector<T>>(op.first)) {
+            return std::make_optional(*p);
+        }
+    } catch(...) {}
+
+    return std::nullopt;
+}
+
+template<typename T>
+optional<T> Argparse::get_option(const string& nome) const {
+    try {
+        auto op = opts.at(nome);
+        if (auto * p = std::get_if<optional<T>>(op.first)) {
+            return *p;
+        }
+    } catch(...) {}
+
+    return std::nullopt;
+}
+
+template<typename T>
+optional<bool> Argparse::has_value_of(const string &name) const {
+    try {
+        auto op = opts.at(name);
+        if (auto * p = std::get_if<optional<T>>(op.first)) {
+            return std::make_optional(p->has_value());
+        }
+    } catch(...) {}
+
+    try {
+        auto op = multiopts.at(name);
+        if (auto * p = std::get_if<vector<T>>(op.first)) {
+            return std::make_optional(! p->empty());
+        }
+    } catch(...) {}
+
+
+    return std::nullopt;
+}
+
+bool Argparse::has_some_value(const string & name) const {
+    return false;
+}
+
+template <typename T, typename ...Args> bool Argparse::has_some_value(const string & name) const {
+    if (auto op = has_value_of<T>(name)) {
+        return op.value();
+    }
+    return has_some_value<Args...>(name);
 }
 #endif /* ARGPARSE_H */
 
