@@ -67,6 +67,7 @@ public:
     // corresponde ao parâmetro argv da função main. A análise das opções
     // é efetuada a partir da segunda posição do vetor (argv[1]).
     int parse(char * argv[]);
+    int parse(string_view args);
 private:
     using OptionTypes = variant<optional<int>,optional<float>,optional<string>,optional<bool>>;
     using MultiopTypes = variant<vector<int>,vector<float>,vector<string>>;
@@ -79,6 +80,9 @@ private:
     template <typename T> optional<bool> has_value_of(const string & name) const;
     template <typename T, typename ...Args> bool has_some_value(const string & name) const;
     bool has_some_value(const string & name) const;
+    bool set_option(const string & name, const string & val);
+    bool set_multioption(const string & name, const string & val);
+    template <typename F> bool set_option2(const string &name, const string &val, F conv);
 };
 
 template<typename T>
@@ -112,7 +116,7 @@ template<typename T>
 optional<T> Argparse::get_option(const string& nome) const {
     try {
         auto op = opts.at(nome);
-        if (auto * p = std::get_if<optional<T>>(op.first)) {
+        if (auto * p = std::get_if<optional<T>>(&op.first)) {
             return *p;
         }
     } catch(...) {}
@@ -124,14 +128,14 @@ template<typename T>
 optional<bool> Argparse::has_value_of(const string &name) const {
     try {
         auto op = opts.at(name);
-        if (auto * p = std::get_if<optional<T>>(op.first)) {
+        if (auto * p = std::get_if<optional<T>>(&op.first)) {
             return std::make_optional(p->has_value());
         }
     } catch(...) {}
 
     try {
         auto op = multiopts.at(name);
-        if (auto * p = std::get_if<vector<T>>(op.first)) {
+        if (auto * p = std::get_if<vector<T>>(&op.first)) {
             return std::make_optional(! p->empty());
         }
     } catch(...) {}
@@ -150,5 +154,24 @@ template <typename T, typename ...Args> bool Argparse::has_some_value(const stri
     }
     return has_some_value<Args...>(name);
 }
+
+template <typename F> bool Argparse::set_option2(const string &name, const string &val, F conv) {
+    using T = std::result_of_t(conv);
+    try {
+        auto & op = opts.at(name);
+        if (auto * p = std::get_if<optional<T>>(&op.first)) {
+            try {
+                auto opval = conv(val);
+                op.first = std::make_optional(opval);
+                return true;
+            } catch(...) {
+                return false;
+            }
+        }
+    } catch(...) {}
+    return false;
+}
+
+
 #endif /* ARGPARSE_H */
 
