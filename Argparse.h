@@ -31,6 +31,7 @@ using std::string_view;
 class Argparse {
 public:
     Argparse();
+    Argparse(string_view titulo);
     Argparse(const Argparse& orig);
     virtual ~Argparse();
 
@@ -68,6 +69,9 @@ public:
     // é efetuada a partir da segunda posição do vetor (argv[1]).
     int parse(char * argv[]);
     int parse(string_view args);
+
+    // Gera um texto de ajuda, com base nas opções cadastradas
+    string help() const;
 private:
     using OptionTypes = variant<optional<int>,optional<float>,optional<string>,optional<bool>>;
     using MultiopTypes = variant<vector<int>,vector<float>,vector<string>>;
@@ -76,10 +80,12 @@ private:
     map<string,std::pair<OptionTypes, string>> opts;
     map<string,std::pair<MultiopTypes, string>> multiopts;
     string extra; // resto da linha de comando ...
+    string titulo;
 
     template <typename T> optional<bool> has_value_of(const string & name) const;
-    template <typename T, typename ...Args> bool has_some_value(const string & name) const;
-    bool has_some_value(const string & name) const;
+    template <typename T, typename U, typename ...Args> bool has_some_value(const string & name) const;
+    template <typename T> bool has_some_value(const string & name) const;
+//    bool has_some_value(const string & name) const;
     bool set_option(const string & name, const string & val);
     bool set_multioption(const string & name, const string & val);
     template <typename F> optional<bool> set_option2(const string &name, const string &val, F conv);
@@ -105,7 +111,7 @@ template<typename T>
 optional<vector<T>> Argparse::get_multioption(const string& nome) const {
     try {
         auto op = multiopts.at(nome);
-        if (auto * p = std::get_if<vector<T>>(op.first)) {
+        if (auto * p = std::get_if<vector<T>>(&op.first)) {
             return std::make_optional(*p);
         }
     } catch(...) {}
@@ -145,15 +151,17 @@ optional<bool> Argparse::has_value_of(const string &name) const {
     return std::nullopt;
 }
 
+template <typename T>
 bool Argparse::has_some_value(const string & name) const {
-    return false;
+    return has_value_of<T>(name).value_or(false);
 }
 
-template <typename T, typename ...Args> bool Argparse::has_some_value(const string & name) const {
-    if (auto op = has_value_of<T>(name)) {
-        return op.value();
-    }
-    return has_some_value<Args...>(name);
+template <typename T, typename U, typename ...Args> bool Argparse::has_some_value(const string & name) const {
+    return has_value_of<T>(name).value_or(has_some_value<U,Args...>(name));
+//    if (auto op = has_value_of<T>(name)) {
+//        return op.value();
+//    }
+//    return has_some_value<Args...>(name);
 }
 
 template <typename F> optional<bool> Argparse::set_option2(const string &name, const string &val, F conv) {
@@ -188,6 +196,7 @@ template <typename F> optional<bool> Argparse::set_multioption2(const string &na
     } catch(...) {}
     return std::nullopt;
 }
+
 
 #endif /* ARGPARSE_H */
 

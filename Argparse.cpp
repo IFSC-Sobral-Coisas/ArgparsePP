@@ -17,11 +17,32 @@
 Argparse::Argparse() {
 }
 
+Argparse::Argparse(string_view titulo):titulo(titulo) {
+}
+
 Argparse::Argparse(const Argparse& orig) {
     opts = orig.opts;
 }
 
 Argparse::~Argparse() {    
+}
+
+string Argparse::help() const {
+    string res = titulo + "\n\n";
+    for (auto & [opname, op]: opts) {
+        res += opname;
+
+        res += '\t' + op.second + '\n';
+    }
+    if (! multiopts.empty()) {
+        res += "\nMultiopts:\n";
+        for (auto &[opname, op]: multiopts) {
+            res += opname;
+
+            res += '\t' + op.second + '\n';
+        }
+    }
+    return res;
 }
 
 void Argparse::add_flag(const string& name, string_view ajuda) {
@@ -100,33 +121,33 @@ bool Argparse::has_value(const string &name) const {
 //    return cnt;
 //}
 
-std::optional<std::pair<std::string, std::string>> extract_option(const std::string & tok, const std::regex & expr, int pos) {
-    std::smatch sm;
-
-    if (!std::regex_match(tok, sm, expr)) {
-        auto name = sm[pos].str();
-        auto val = sm[pos+2].str();
-        return std::make_optional(std::make_pair(name, val));
-    }
-
-    return std::nullopt;
-}
-
-Arg::Arg(const std::string & tok) {
-    auto expr = this->get_regex();
-    auto val_pos = this->get_value_pos();
-//    static std::regex expr1("-([a-zA-Z])(=[^\\b]{0,})?");
-//    static std::regex expr2("--([a-zA-Z]{2,})(=[^\\b]{0,})?");
-    std::smatch sm;
-
-    if (auto op = extract_option(tok, expr, val_pos)) {
-        auto info = op.value();
-        _name  = info.first;
-        this->setup_default_value(info.second);
-    } else {
-        throw std::invalid_argument("invalid argument option");
-    }
-}
+//std::optional<std::pair<std::string, std::string>> extract_option(const std::string & tok, const std::regex & expr, int pos) {
+//    std::smatch sm;
+//
+//    if (!std::regex_match(tok, sm, expr)) {
+//        auto name = sm[pos].str();
+//        auto val = sm[pos+2].str();
+//        return std::make_optional(std::make_pair(name, val));
+//    }
+//
+//    return std::nullopt;
+//}
+//
+//Arg::Arg(const std::string & tok) {
+//    auto expr = this->get_regex();
+//    auto val_pos = this->get_value_pos();
+////    static std::regex expr1("-([a-zA-Z])(=[^\\b]{0,})?");
+////    static std::regex expr2("--([a-zA-Z]{2,})(=[^\\b]{0,})?");
+//    std::smatch sm;
+//
+//    if (auto op = extract_option(tok, expr, val_pos)) {
+//        auto info = op.value();
+//        _name  = info.first;
+//        this->setup_default_value(info.second);
+//    } else {
+//        throw std::invalid_argument("invalid argument option");
+//    }
+//}
 
 static auto f_string = [](const std::string & s){return s;};
 static auto f_int = [](const std::string & s){return std::stoi(s);};
