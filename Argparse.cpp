@@ -27,17 +27,37 @@ Argparse::Argparse(const Argparse& orig) {
 Argparse::~Argparse() {    
 }
 
+
 string Argparse::help() const {
+    auto add_dashes = [](const string & opname) {
+        return (opname.size()<2?"-":"--") + opname;
+    };
+   auto get_type_name = [](auto&& arg) -> string {
+        using T = typename std::decay_t<decltype(arg)>::value_type;
+        if constexpr (std::is_same_v<T, int>) {
+            return "INT";
+        } else if constexpr (std::is_same_v<T, float>) {
+            return "FLOAT";
+        } else if constexpr (std::is_same_v<T, string>) {
+            return "STR";
+        }
+        return "";
+    };
+
     string res = titulo + "\n\n";
     for (auto & [opname, op]: opts) {
-        res += opname;
+        res += add_dashes(opname);
+        if (has_value(opname)) {
+            res += ' ' + std::visit(get_type_name, op.first);
+        }
 
         res += '\t' + op.second + '\n';
     }
     if (! multiopts.empty()) {
         res += "\nMultiopts:\n";
         for (auto &[opname, op]: multiopts) {
-            res += opname;
+            res += add_dashes(opname);
+            res += ' ' + std::visit(get_type_name, op.first);
 
             res += '\t' + op.second + '\n';
         }

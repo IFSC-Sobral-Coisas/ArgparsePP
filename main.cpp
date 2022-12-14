@@ -45,13 +45,22 @@ int main(int argc, char** argv) {
         auto help = args.help();
         std::cout << help << std::endl;
     }
-    if (args.has_value("num")) {
-        auto n = args.get_option<int>("num");
-    } else {
-        auto help = args.help();
-        std::cout << help << std::endl;
+    if (auto n = args.get_option<int>("num")) {
+        std::cout << n.value() << " linhas" << std::endl;
     }
-    auto arq = args.get_multioption<string>("out");
+    if (auto n = args.get_option<string>("f")) {
+        std::cout << n.value() << " arquivo" << std::endl;
+    }
+    if (auto n = args.get_multioption<string>("out")) {
+        std::cout << "Out: ";
+        for (auto &out: n.value()) {
+            std::cout << out << ',';
+        }
+        std::cout << std::endl;
+    }
+
+    auto help = args.help();
+    std::cout << help << std::endl;
 
     return 0;
 }
