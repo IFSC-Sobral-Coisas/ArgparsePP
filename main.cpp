@@ -36,8 +36,15 @@ int main(int argc, char** argv) {
     args.add_option("num", "Linhas iniciais a apresentar", 10);
     args.add_multioption<string>("out", "Saída onde apresentar o resultado");
 
+    for (auto j=1; argv[j] != NULL; j++) {
+        std::cout << j << ": " << argv[j] << std::endl;
+    }
     args.parse(argv);
 
+    if (args.get_flag("h")) {
+        auto help = args.help();
+        std::cout << help << std::endl;
+    }
     if (args.has_value("num")) {
         auto n = args.get_option<int>("num");
     } else {

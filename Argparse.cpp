@@ -55,7 +55,7 @@ bool Argparse::get_flag(const string & name) const {
 }
 
 bool Argparse::has_value(const string &name) const {
-    return has_some_value<int,string,float,bool>(name);
+    return has_some_value<int,string,float>(name) or has_multi_value<int,string,float>(name);
 
 //    if (auto op = has_value_of<int>(name)) {
 //        return op.value();
@@ -183,6 +183,11 @@ int Argparse::parse(std::string_view args) {
         return std::nullopt;
     };
 
+    auto remove_dashes = [](const string & op) {
+        auto pos = op.find_first_not_of("-");
+        return op.substr(pos);
+    };
+
     std::regex e(expr);
     std::regex_iterator<std::string_view::iterator> it(args.begin(), args.end(), e);
     std::regex_iterator<std::string_view::iterator> rend;
@@ -192,6 +197,7 @@ int Argparse::parse(std::string_view args) {
         auto op = extract_option(it->str(), e);
         if (op) {
             auto [opname, opval] = op.value();
+            opname = remove_dashes(opname);
             if (! set_option(opname, opval)) {
                 if (!set_multioption(opname, opval)) {
                     throw std::invalid_argument("opção e/ou valor inválidos: opção="+opname+", valor="+opval);
@@ -203,12 +209,14 @@ int Argparse::parse(std::string_view args) {
     return cnt;
 }
 
-int Argparse::parse(char* argv[]) {
+#include <iostream>
+int Argparse::parse(char** argv) {
     std::string args;
-    auto ** ptr = argv;
-    for (ptr++; *ptr != NULL; ptr++) {
-        args += *ptr + ' ';
+    for (int j=1; argv[j] != NULL; j++) {
+        args += argv[j];
+        args += ' ';
     }
+    std::cout << "args=" << args << std::endl;
     if (! args.empty()) {
         args.pop_back();
     }

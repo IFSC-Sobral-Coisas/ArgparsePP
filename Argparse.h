@@ -67,7 +67,7 @@ public:
     // as opções e seus valores contidos nesses argumentos. O vetor argv
     // corresponde ao parâmetro argv da função main. A análise das opções
     // é efetuada a partir da segunda posição do vetor (argv[1]).
-    int parse(char * argv[]);
+    int parse(char ** argv);
     int parse(string_view args);
 
     // Gera um texto de ajuda, com base nas opções cadastradas
@@ -83,8 +83,11 @@ private:
     string titulo;
 
     template <typename T> optional<bool> has_value_of(const string & name) const;
+    template <typename T> optional<bool> has_multivalue_of(const string & name) const;
     template <typename T, typename U, typename ...Args> bool has_some_value(const string & name) const;
     template <typename T> bool has_some_value(const string & name) const;
+    template <typename T, typename U, typename ...Args> bool has_multi_value(const string & name) const;
+    template <typename T> bool has_multi_value(const string & name) const;
 //    bool has_some_value(const string & name) const;
     bool set_option(const string & name, const string & val);
     bool set_multioption(const string & name, const string & val);
@@ -140,6 +143,11 @@ optional<bool> Argparse::has_value_of(const string &name) const {
         }
     } catch(...) {}
 
+    return std::nullopt;
+}
+
+template<typename T>
+optional<bool> Argparse::has_multivalue_of(const string &name) const {
     try {
         auto op = multiopts.at(name);
         if (auto * p = std::get_if<vector<T>>(&op.first)) {
@@ -149,6 +157,15 @@ optional<bool> Argparse::has_value_of(const string &name) const {
 
 
     return std::nullopt;
+}
+
+template <typename T>
+bool Argparse::has_multi_value(const string & name) const {
+    return has_multivalue_of<T>(name).value_or(false);
+}
+
+template <typename T, typename U, typename ...Args> bool Argparse::has_multi_value(const string & name) const {
+    return has_multivalue_of<T>(name).value_or(has_multi_value<U, Args...>(name));
 }
 
 template <typename T>
