@@ -128,27 +128,27 @@ Arg::Arg(const std::string & tok) {
     }
 }
 
-bool Argparse::set_option(const string &name, const string &val) {
-    if (!set_option2<int>(name, val, std::stoi)) {
+static auto f_string = [](const std::string & s){return s;};
+static auto f_int = [](const std::string & s){return std::stoi(s);};
+static auto f_float = [](const std::string & s){return std::stof(s);};
+static auto f_bool = [](const std::string & s){return true;};
 
-    }
-    try {
-        auto & op = opts.at(name);
-        if (auto * p = std::get_if<optional<int>>(&op.first)) {
-            try {
-                auto opval = std::stoi(val);
-                op.first = std::make_optional(opval);
-                return true;
-            } catch(...) {
-                return false;
-            }
-        }
-    } catch(...) {}
-    return false;
+bool Argparse::set_option(const string &name, const string &val) {
+    return set_option2(name, val, f_string).value_or(
+            set_option2(name, val, f_int).value_or(
+                    set_option2(name, val, f_float).value_or(
+                            set_option2(name, val, f_bool).value_or(false)
+                            )
+                    )
+            );
 }
 
 bool Argparse::set_multioption(const string &name, const string &val) {
-    return false;
+    return set_multioption2(name, val, f_string).value_or(
+            set_multioption2(name, val, f_int).value_or(
+                    set_multioption2(name, val, f_float).value_or(false)
+                    )
+            );
 }
 
 int Argparse::parse(std::string_view args) {

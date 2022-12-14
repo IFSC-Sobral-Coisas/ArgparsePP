@@ -82,17 +82,18 @@ private:
     bool has_some_value(const string & name) const;
     bool set_option(const string & name, const string & val);
     bool set_multioption(const string & name, const string & val);
-    template <typename F> bool set_option2(const string &name, const string &val, F conv);
+    template <typename F> optional<bool> set_option2(const string &name, const string &val, F conv);
+    template <typename F> optional<bool> set_multioption2(const string &name, const string &val, F conv);
 };
 
 template<typename T>
 void Argparse::add_option(string_view nome, string_view ajuda, const T &defval) {
-    opts.emplace(nome, std::make_pair(variant<optional<T>>(std::make_optional<T>(defval)), ajuda));
+    opts.emplace(nome, std::make_pair(OptionTypes(std::make_optional<T>(defval)), ajuda));
 }
 
 template<typename T>
 void Argparse::add_option(string_view nome, string_view ajuda) {
-    opts.emplace(nome, std::make_pair(variant<optional<T>>(std::nullopt), ajuda));
+    opts.emplace(nome, std::make_pair(OptionTypes(optional<T>{}), ajuda));
 }
 
 template<typename T>
@@ -155,23 +156,38 @@ template <typename T, typename ...Args> bool Argparse::has_some_value(const stri
     return has_some_value<Args...>(name);
 }
 
-template <typename F> bool Argparse::set_option2(const string &name, const string &val, F conv) {
-    using T = std::result_of_t(conv);
+template <typename F> optional<bool> Argparse::set_option2(const string &name, const string &val, F conv) {
+    using T = typename std::result_of<F(const std::string&)>::type;
     try {
         auto & op = opts.at(name);
         if (auto * p = std::get_if<optional<T>>(&op.first)) {
             try {
                 auto opval = conv(val);
                 op.first = std::make_optional(opval);
-                return true;
+                return std::make_optional(true);
             } catch(...) {
-                return false;
+                return std::make_optional(false);
             }
         }
     } catch(...) {}
-    return false;
+    return std::nullopt;
 }
 
+template <typename F> optional<bool> Argparse::set_multioption2(const string &name, const string &val, F conv) {
+    using T = typename std::result_of<F(const std::string&)>::type;
+    try {
+        auto & op = multiopts.at(name);
+        if (auto * p = std::get_if<vector<T>>(&op.first)) {
+            try {
+                p->push_back(conv(val));
+                return std::make_optional(true);
+            } catch(...) {
+                return std::make_optional(false);
+            }
+        }
+    } catch(...) {}
+    return std::nullopt;
+}
 
 #endif /* ARGPARSE_H */
 
