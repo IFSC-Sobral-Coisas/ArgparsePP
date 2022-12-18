@@ -194,6 +194,19 @@ bool Argparse::set_multioption(const string &name, const string &val) {
 
 int Argparse::parse(std::string_view args) {
     static const string expr="(-[a-zA-Z]|--[a-zA-Z]{2,})(\\s+[^-\\s]{0,})?";
+
+    auto parse_extra = [](string_view args) -> std::pair<string,string> {
+        std::regex e("\\s--\\s+(.*)");
+
+        std::smatch sm;
+        const string & s = static_cast<string>(args);
+        std::regex_search(s, sm,  e);
+        if (sm.size() > 0) {
+            return std::make_pair(s.substr(0, sm.position()), sm[1]);
+        }
+        return std::make_pair(s, "");
+    };
+
     auto extract_option = [](const string & tok, std::regex & e) -> std::optional<std::pair<std::string, std::string>> {
         std::smatch sm;
         std::regex_match(tok, sm,  e);
@@ -208,9 +221,11 @@ int Argparse::parse(std::string_view args) {
         return op.substr(pos);
     };
 
+    auto arg_opts = parse_extra(args);
+    extra = arg_opts.second;
     std::regex e(expr);
-    std::regex_iterator<std::string_view::iterator> it(args.begin(), args.end(), e);
-    std::regex_iterator<std::string_view::iterator> rend;
+    std::regex_iterator<std::string::iterator> it(arg_opts.first.begin(), arg_opts.first.end(), e);
+    std::regex_iterator<std::string::iterator> rend;
     int cnt = 0;
 
     for (; it != rend; ++it, cnt++) {
@@ -236,7 +251,7 @@ int Argparse::parse(char** argv) {
         args += argv[j];
         args += ' ';
     }
-    std::cout << "args=" << args << std::endl;
+
     if (! args.empty()) {
         args.pop_back();
     }

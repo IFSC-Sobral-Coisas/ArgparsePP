@@ -5,15 +5,6 @@
 /*
  * 
  */
-void ajuda(const std::string & progname) {
-    std::cout << "Uso: " << progname << "-h | [-e N][-L][-P][-p][--type TIPO] [extra...]" << std::endl;
-    std::cout << "-h: mostra esta ajuda" << std::endl;
-    std::cout << "-e N: define extensão (N = número)" << std::endl;
-    std::cout << "-L: ativa largura" << std::endl;
-    std::cout << "-P: ativa profundidade" << std::endl;
-    std::cout << "-p path: define pathname" << std::endl;
-    std::cout << "--type: tipo do arquivo" << std::endl;
-}
 
 int main(int argc, char** argv) {
     Argparse args("Demo");
@@ -36,11 +27,9 @@ int main(int argc, char** argv) {
     args.add_option("num", "Linhas iniciais a apresentar", 10);
     args.add_multioption<string>("out", "Saída onde apresentar o resultado");
 
-    for (auto j=1; argv[j] != NULL; j++) {
-        std::cout << j << ": " << argv[j] << std::endl;
-    }
     args.parse(argv);
 
+    std::cout << "extra: " << args.get_extra() << std::endl;
     if (args.get_flag("h")) {
         auto help = args.help();
         std::cout << help << std::endl;

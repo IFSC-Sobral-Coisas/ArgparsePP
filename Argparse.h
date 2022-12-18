@@ -39,24 +39,34 @@ public:
     // não requer um valor a ser informado na linha de comando.
     // Ela é do tipo bool: se aparece na linha de comando seu valor é true,
     // e, caso não apareça, seu valor é false.
+    // o parâmetro "ajuda" é usado para gerar o texto de ajuda, via método "help"
     void add_flag(const string & nome, string_view ajuda);
 
     // Métodos para adicionar uma opção comum. Tal tipo de opção
     // requer um valor a ser informado na linha de comando.
-    // Ela é do tipo string: se aparece na linha de comando, a string que a sucede
-    // se torna seu valor. Caso essa opção não apareça, seu valor é uma string vazia.
-    // se "multi" for true, a opçoã pode ser usada múltiplas vezes.
+    // Ela pode ser do tipo: string, int ou float; depende do valor default
+    // informado (defval), ou da especificação do tipo T na chamada desse método template
+    // No caso de multioption, o tipo deve ser especificado na chamada do método, pois não
+    // há valor default.
+    // o parâmetro "ajuda" é usado para gerar o texto de ajuda, via método "help"
     template <typename T> void add_option(string_view nome, string_view ajuda, const T & defval);
     template <typename T> void add_option(string_view nome, string_view ajuda);
     template <typename T> void add_multioption(string_view nome, string_view ajuda);
 
-    // Métodos para obter o valor de uma opção comum
+    // Métodos para obter o valor de uma opção
+    // O tipo do valor deve ser explicitamente indicado
+    // O resultado é do tipo optional: se o tipo da opção a ser obtida estiver correto,
+    // e a opção tiver sido fornecida, o optional possui o valor da opção. Caso contrário,
+    // ele é nullopt.
+    // Para multioption, se nenhuma opção tiver sido fornecida, e o tipo estiver correto,
+    // o resultado é um vector vazio dentro do optional
     template <typename T> optional<vector<T>> get_multioption(const string& nome) const;
     template <typename T> optional<T> get_option(const string& nome) const;
 
     // Métodos para obter o valor de uma opção do tipo flag
     bool get_flag(const string & name) const;
 
+    // confere se a opção possui um valor, seja simples ou multi
     bool has_value(const string& name) const;
 
     // Método para obter os argumentos que não foram processados como
