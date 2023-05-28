@@ -9,6 +9,29 @@ O processamento dos argumentos de linha de comando é necessário em diferentes 
 
 Ambas opções acima são bastante utilizadas e completas. No entanto, por se pretenderem genéricas, apresentam alguns detalhes a serem bem compreendidos para que possam ser utilizadas (veja os manuais). Uma alternativa é Argparse, uma pequena classe cujos objetos processam os argumentos de forma simplificada.
 
+## Para compilar usando este Argparse
+
+Inclua o seguinte no arquivo CMakeLists.txt de seu projeto:
+
+```
+include(FetchContent)
+FetchContent_Declare(
+        argparse
+        URL https://github.com/IFSC-Sobral-Coisas/ArgparsePP/archive/refs/tags/v1.0.0.tar.gz
+)
+FetchContent_MakeAvailable(argparse)
+include_directories(${argparse_SOURCE_DIR} .)
+
+# OBS: aqui é apenas uma demonstração de como linkar a biblioteca poller ao seu executável
+
+# A linha abaixo usualmente é gerada pelo próprio CLion (ou por você mesmo, se criar seu CMakeLists.txt manualmente)
+add_executable(test_app main.cpp)
+
+# O comando a seguir linka seu executável com a biblioteca argparse
+# Portanto, renomeie test_app para o nome do seu executável
+target_link_libraries(test_app argparse)
+```
+
 ## Argparse
 
 A classe Argparse é capaz de processar argumentos com opções curtas e longas, com ou sem valores complementares. Algumas definições podem esclarecer isso:
